@@ -45,7 +45,13 @@ func NewCacheCfg[T any](ttl time.Duration, forceUpdate bool) *CachableConfig[T] 
 }
 
 // GetValue retrieves the value from the cache or fetches it if not present
-func (c *CachableConfig[T]) GetValue(args ...any) (T, bool, error) {
+func (c *CachableConfig[T]) GetValue(args ...any) (T, error) {
+	v, _, err := c.GetValueWithCacheStatus(args...)
+	return v, err
+}
+
+// GetValue retrieves the value from the cache or fetches it if not present
+func (c *CachableConfig[T]) GetValueWithCacheStatus(args ...any) (T, bool, error) {
 	c.Mutex.RLock()
 	key := c.ValueFetcher.Key(args...)
 	if v, ok := c.Cache[key]; ok && v.ExpireTime.After(time.Now()) {
@@ -76,8 +82,4 @@ func (c *CachableConfig[T]) GetValue(args ...any) (T, bool, error) {
 		ExpireTime: time.Now().Add(c.TTL),
 	}
 	return value, false, nil
-}
-
-func (c *CachableConfig[T]) CacheSize() int {
-	return len(c.Cache)
 }
